@@ -1,4 +1,8 @@
 package bot;
+import game.GameSession;
+import java.util.List;
+import java.util.Random;
+
 public class EasyBot extends BotPlayer {
 
     private Random random;
