@@ -1,6 +1,6 @@
 package bot; 
 
-public class BotPlayer{
+public abstract class BotPlayer{
 
 
 }
