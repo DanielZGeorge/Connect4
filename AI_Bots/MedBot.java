@@ -86,6 +86,25 @@ public class MedBot extends BotPlayer{
 
         return longest;
     }
+//Count consecutive from (col, row)
+    private int countConsecutive(int[][] board, int col, int row,
+                                  int colStep, int rowStep, int player) {
+        int cols = board.length;
+        int rows = board[0].length;
+        int count = 0;
+
+        int c = col;
+        int r = row;
+
+        while (c >= 0 && c < cols && r >= 0 && r < rows && board[c][r] == player) {
+            count++;
+            c += colStep;
+            r += rowStep;
+        }
+
+        return count;
+    }
+}
 
 
     
