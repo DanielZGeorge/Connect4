@@ -1,5 +1,5 @@
-
-public class easyBot{
+package bot;
+public class easyBot extends BotPlayer {
 
 
 }

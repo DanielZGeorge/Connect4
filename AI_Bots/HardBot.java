@@ -1,5 +1,5 @@
-
-public class HardBot{
+package bot;
+public class HardBot extends BotPlayer{
 
 
 }
