@@ -58,5 +58,35 @@ public class MedBot extends BotPlayer{
         return 0;
     }
 
+    // Finds longest chain after placing a piece 
+    private int getLongestChain(int[][] board, int col, int player) {
+        int rows = board[0].length;
+
+        // Find which row the piece landed in 
+        int landedRow = -1;
+        for (int row = 0; row < rows; row++) {
+            if (board[col][row] == player) {
+                landedRow = row; 
+            }
+        }
+
+        if (landedRow == -1) return 0; 
+
+        // Check all 4 directions and find the longest chain through (col, landedRow)
+        int[][] directions = {{1,0},{0,1},{1,1},{1,-1}};
+        int longest = 0;
+
+        for (int[] dir : directions) {
+            // Count in the positive direction + negative direction, minus 1 for center
+            int chain = countConsecutive(board, col, landedRow,  dir[0],  dir[1], player)
+                      + countConsecutive(board, col, landedRow, -dir[0], -dir[1], player)
+                      - 1; // subtract 1 because the center piece is counted twice
+            longest = Math.max(longest, chain);
+        }
+
+        return longest;
+    }
+
+
     
 }
