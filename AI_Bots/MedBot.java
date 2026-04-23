@@ -4,7 +4,7 @@ import java.util.List;
 
 
 public class MedBot extends BotPlayer{
-    public MediumBot(int playerNumber) {
+    public MedBot(int playerNumber) {
         super("Medium Bot", playerNumber);
     }
 
