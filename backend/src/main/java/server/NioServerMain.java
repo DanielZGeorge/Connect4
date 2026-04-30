@@ -3,7 +3,6 @@ package server;
 public class NioServerMain {
     public static void main(String[] args) {
     	
-    	System.out.println("Hello");
         int port = 9090;
         if (args.length > 0) {
             try {
@@ -14,5 +13,6 @@ public class NioServerMain {
         }
         NioServer server = new NioServer(port);
         server.startServer();
+        
     }
 }

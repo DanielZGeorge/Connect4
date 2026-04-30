@@ -45,12 +45,16 @@ public class NioServer {
             serverChannel.configureBlocking(false);
             serverChannel.bind(new InetSocketAddress(port));
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+            
+            System.out.println("Successfully booted NIO server on port " + String.valueOf(port));
 
             while (serverChannel.isOpen()) {
-            	System.out.println("Hello");
+            	
                 selector.select();
                 Set<SelectionKey> keys = selector.selectedKeys();
                 Iterator<SelectionKey> iterator = keys.iterator();
+                
+                
 
                 while (iterator.hasNext()) {
                     SelectionKey key = iterator.next();
