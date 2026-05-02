@@ -54,8 +54,6 @@ public class NioServer {
                 Set<SelectionKey> keys = selector.selectedKeys();
                 Iterator<SelectionKey> iterator = keys.iterator();
                 
-                
-
                 while (iterator.hasNext()) {
                     SelectionKey key = iterator.next();
                     iterator.remove();

@@ -1,0 +1,6 @@
+ClientMain.class
+Launcher.class
+MockBackend.class
+ViewManager.class
+MainMenuView.class
+LoginView.class
