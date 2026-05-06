@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
-Build-Jdk-Spec: 21
-Created-By: Maven Integration for Eclipse
+Main-Class: C:\Users\danzg\IdeaProjects\Connect4\frontend\target\connect
+ 4-frontend-1.0.0.jar
 

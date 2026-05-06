@@ -80,6 +80,22 @@ public class UserDAO {
         }
     }
 
+    public User getUserByUsername(String username) throws Exception {
+        String sql = "SELECT * FROM Users WHERE username = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+            if (!rs.next()) return null;
+            return new User(
+                    rs.getInt("user_id"),
+                    rs.getString("username"),
+                    rs.getString("email"),
+                    rs.getInt("elo_rating")
+            );
+        }
+    }
+
     public void updateElo(int userId, int newElo) throws Exception {
         String sql = "UPDATE Users SET elo_rating = ? WHERE user_id = ?";
 

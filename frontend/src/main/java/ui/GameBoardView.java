@@ -68,6 +68,20 @@ public class GameBoardView {
     private VBox      postGameButtons;
 
     // ── Constructor ──────────────────────────────────────────────────────────
+    public GameBoardView() {
+        this.player1Name = "Player 1";
+        this.player1Elo = 1000;
+        this.player2Name = "Player 2";
+        this.player2Elo = 1000;
+        this.client = null;
+        this.username = "Player 1";
+        this.opponent = "Player 2";
+        buildUI();
+        applyCSS();
+        startTimer();
+        updateTurnUI();
+    }
+
     public GameBoardView(GameClient client, String username, String opponent) {
         this.client = client;
         this.username = username;

@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: C:\Users\danzg\IdeaProjects\Connect4\frontend\target\connect
+ 4-frontend-1.0.0.jar
+
