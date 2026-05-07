@@ -37,6 +37,7 @@ public class LoginView {
             if ("LOGIN_SUCCESS".equals(response)) {
                 System.out.println("Login Success!");
                 ViewManager.setUsername(user);
+                ViewManager.setGuest(false);
                 ViewManager.switchTo("Menu");
             } else {
                 Alert alert = new Alert(Alert.AlertType.ERROR, "Invalid Credentials!");
@@ -47,7 +48,11 @@ public class LoginView {
         Button guestBtn = new Button("Continue as Guest");
         guestBtn.setMinWidth(200);
         guestBtn.setStyle("-fx-background-color: #7f8c8d; -fx-text-fill: white;");
-        guestBtn.setOnAction(e -> ViewManager.switchTo("Menu"));
+        guestBtn.setOnAction(e -> {
+            ViewManager.setUsername("guest_" + System.currentTimeMillis());
+            ViewManager.setGuest(true);
+            ViewManager.switchTo("Menu");
+        });
 
         layout.getChildren().addAll(title, usernameField, passwordField, loginBtn, guestBtn);
         this.scene = new Scene(layout, 800, 600);

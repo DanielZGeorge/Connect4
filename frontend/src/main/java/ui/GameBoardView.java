@@ -1,7 +1,7 @@
 package ui;
 
 import client.GameClient;
-//import client.NetworkMessage; // if needed later
+import client.WsGameClient;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.geometry.*;
@@ -14,6 +14,10 @@ import javafx.scene.text.*;
 import javafx.util.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class GameBoardView {
 	//match specifics
@@ -67,6 +71,9 @@ public class GameBoardView {
     private GridPane  boardGrid;
     private VBox      postGameButtons;
 
+    private final WsGameClient wsClient = WsGameClient.getInstance();
+    private String activeGameId;
+
     // ── Constructor ──────────────────────────────────────────────────────────
     public GameBoardView() {
         this.player1Name = "Player 1";
@@ -76,6 +83,7 @@ public class GameBoardView {
         this.client = null;
         this.username = "Player 1";
         this.opponent = "Player 2";
+        wireWebSocket();
         buildUI();
         applyCSS();
         startTimer();
@@ -86,7 +94,7 @@ public class GameBoardView {
         this.client = client;
         this.username = username;
         this.opponent = opponent;
-
+        wireWebSocket();
         buildUI();
         applyCSS();
         startTimer();
@@ -100,6 +108,7 @@ public class GameBoardView {
         this.player1Elo  = p1Elo;
         this.player2Name = p2Name;
         this.player2Elo  = p2Elo;
+        wireWebSocket();
         buildUI();
         applyCSS();
         startTimer();
@@ -410,16 +419,11 @@ public class GameBoardView {
 
     private void handleClick(int col) {
         if (gameOver) return;
-
-        try {
-            String msg = "MOVE;" + username + ";" + opponent + ";col=" + col;
-            client.sendMessage(msg);
-            System.out.println("Sent move: " + msg);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        String user = ViewManager.getUsername();
+        wsClient.connectIfNeeded(user, ViewManager.isGuest());
+        wsClient.send("MOVE;" + user + ";server;col=" + col);
     }
-    
+
     public void applyMove(String message) {
         String[] parts = message.split(";");
         String payload = parts[3]; // "col=3"
@@ -623,9 +627,14 @@ public class GameBoardView {
     private void sendChat() {
         String text = chatInput.getText().trim();
         if (text.isEmpty() || gameOver) return;
-        addChatMessage(player1Name, 1, text);
+
+        String user = ViewManager.getUsername();
+        wsClient.connectIfNeeded(user, ViewManager.isGuest());
+        wsClient.send("CHAT;" + user + ";server;" + text);
+
+        int playerNum = user.equals(player1Name) ? 1 : user.equals(player2Name) ? 2 : 0;
+        addChatMessage(user, playerNum, text);
         chatInput.clear();
-        // TODO: send over WebSocket → server broadcasts to opponent
     }
 
     private void addChatMessage(String sender, int player, String text) {
@@ -680,5 +689,153 @@ public class GameBoardView {
         } catch (Exception e) {
             System.out.println("Could not load style.css");
         }
+    }
+
+    private void wireWebSocket() {
+        String user = ViewManager.getUsername();
+        if (user != null) {
+            wsClient.connectIfNeeded(user, ViewManager.isGuest());
+        }
+        wsClient.setMessageHandler(message -> Platform.runLater(() -> handleServerMessage(message)));
+    }
+
+    private void handleServerMessage(String message) {
+        ParsedMessage parsed = parseMessage(message);
+        if (parsed == null) return;
+
+        if ("STATE".equalsIgnoreCase(parsed.type())) {
+            Snapshot snapshot = parseSnapshot(parsed.payload());
+            if (snapshot == null) return;
+
+            activeGameId = parsed.target();
+            applySnapshot(snapshot);
+            if (!"Game".equals(ViewManager.getCurrentSceneName())) {
+                ViewManager.switchTo("Game");
+            }
+            return;
+        }
+
+        if ("CHAT".equalsIgnoreCase(parsed.type())) {
+            String sender = parsed.sender();
+            int playerNum = sender.equals(player1Name) ? 1 : sender.equals(player2Name) ? 2 : 0;
+            addChatMessage(sender, playerNum, parsed.payload());
+            return;
+        }
+
+        if ("ERROR".equalsIgnoreCase(parsed.type())) {
+            if ("CHAT".equalsIgnoreCase(parsed.target())) {
+                addSystemMessage("Chat error: " + parsed.payload());
+            }
+        }
+    }
+
+    private void applySnapshot(Snapshot snapshot) {
+        player1Name = snapshot.player1();
+        player2Name = snapshot.player2();
+        currentPlayer = snapshot.currentPlayer();
+        gameOver = snapshot.gameOver();
+
+        int[][] rows = snapshot.board();
+        for (int r = 0; r < ROWS; r++) {
+            for (int c = 0; c < COLS; c++) {
+                board[r][c] = rows[r][c];
+                Color color = board[r][c] == 1 ? COLOR_P1 : board[r][c] == 2 ? COLOR_P2 : COLOR_EMPTY;
+                cells[r][c].setFill(color);
+                cells[r][c].setEffect(null);
+                cells[r][c].setOpacity(1.0);
+            }
+        }
+
+        updateTurnUI();
+        updateStatusFromSnapshot(snapshot);
+        updateTimerFromSnapshot(snapshot);
+    }
+
+    private void updateStatusFromSnapshot(Snapshot snapshot) {
+        if (!snapshot.gameOver()) {
+            statusLabel.setStyle("-fx-text-fill: #5a607a; -fx-font-size: 12px;");
+            return;
+        }
+
+        if (snapshot.winner() == 0) {
+            statusLabel.setText("It's a draw! 🤝");
+        } else {
+            String winner = snapshot.winner() == 1 ? snapshot.player1() : snapshot.player2();
+            statusLabel.setText("🏆  " + winner + " wins!");
+        }
+        postGameButtons.setVisible(true);
+    }
+
+    private void updateTimerFromSnapshot(Snapshot snapshot) {
+        long now = System.currentTimeMillis();
+        long millisLeft = Math.max(0, snapshot.turnEndsAt() - now);
+        timeLeft = (int) Math.ceil(millisLeft / 1000.0);
+        updateTimerUI();
+    }
+
+    private ParsedMessage parseMessage(String raw) {
+        String[] parts = raw.split(";", 4);
+        if (parts.length < 4) return null;
+        return new ParsedMessage(parts[0], parts[1], parts[2], parts[3]);
+    }
+
+    private Snapshot parseSnapshot(String json) {
+        if (json == null || json.isBlank()) return null;
+
+        String player1 = matchString(json, "\\\"p1\\\":\\\"(.*?)\\\"");
+        String player2 = matchString(json, "\\\"p2\\\":\\\"(.*?)\\\"");
+        int current = matchInt(json, "\\\"currentPlayer\\\":(\\d+)", 1);
+        long turnEndsAt = matchLong(json, "\\\"turnEndsAt\\\":(\\d+)", System.currentTimeMillis());
+        int winner = matchInt(json, "\\\"winner\\\":(\\d+)", 0);
+        boolean gameOverValue = matchBoolean(json, "\\\"gameOver\\\":(true|false)", false);
+
+        int[][] boardRows = new int[ROWS][COLS];
+        List<Integer> values = new ArrayList<>();
+        Matcher valueMatcher = Pattern.compile("\\d+").matcher(extractBoard(json));
+        while (valueMatcher.find()) {
+            values.add(Integer.parseInt(valueMatcher.group()));
+        }
+        int index = 0;
+        for (int r = 0; r < ROWS; r++) {
+            for (int c = 0; c < COLS; c++) {
+                if (index < values.size()) {
+                    boardRows[r][c] = values.get(index++);
+                }
+            }
+        }
+
+        return new Snapshot(player1, player2, current, turnEndsAt, winner, gameOverValue, boardRows);
+    }
+
+    private String extractBoard(String json) {
+        int start = json.indexOf("\"board\":[");
+        if (start == -1) return "";
+        return json.substring(start);
+    }
+
+    private String matchString(String text, String pattern) {
+        Matcher matcher = Pattern.compile(pattern).matcher(text);
+        return matcher.find() ? matcher.group(1) : "";
+    }
+
+    private int matchInt(String text, String pattern, int fallback) {
+        Matcher matcher = Pattern.compile(pattern).matcher(text);
+        return matcher.find() ? Integer.parseInt(matcher.group(1)) : fallback;
+    }
+
+    private long matchLong(String text, String pattern, long fallback) {
+        Matcher matcher = Pattern.compile(pattern).matcher(text);
+        return matcher.find() ? Long.parseLong(matcher.group(1)) : fallback;
+    }
+
+    private boolean matchBoolean(String text, String pattern, boolean fallback) {
+        Matcher matcher = Pattern.compile(pattern).matcher(text);
+        return matcher.find() ? Boolean.parseBoolean(matcher.group(1)) : fallback;
+    }
+
+    private record ParsedMessage(String type, String sender, String target, String payload) {
+    }
+
+    private record Snapshot(String player1, String player2, int currentPlayer, long turnEndsAt, int winner, boolean gameOver, int[][] board) {
     }
 }

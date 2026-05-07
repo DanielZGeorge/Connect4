@@ -1,6 +1,6 @@
 package ui;
 
-import client.GameClient;
+import client.WsGameClient;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -8,7 +8,7 @@ import javafx.scene.layout.VBox;
 
 public class MainMenuView {
     private Scene scene;
-    private GameClient client = new GameClient();
+    private final WsGameClient wsClient = WsGameClient.getInstance();
 
     public MainMenuView() {
         VBox layout = new VBox(20);
@@ -27,36 +27,20 @@ public class MainMenuView {
         playRankedBtn.setMinWidth(250);
         playBotBtn.setMinWidth(250);
         leaderboardBtn.setMinWidth(250);
-        
-        //setting button actions
+
         playRankedBtn.setOnAction(e -> {
-            try {
-            	if (client == null) {
-            	    client = new GameClient();
-            	    client.connect();
-            	    client.listen();
-            	}
-                String username = ViewManager.getUsername();
-                client.sendMessage("MATCH;" + username + ";none;none");
-                System.out.println("Sent ranked queue request");
-            } catch (Exception ex) {
-                ex.printStackTrace();
+            if (ViewManager.isGuest()) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Guests can only spectate matches.");
+                alert.showAndWait();
+                return;
             }
-        });
-        playBotBtn.setOnAction(e -> {
-            try {
-            	if (client == null) {
-            	    client = new GameClient();
-            	    client.connect();
-            	    client.listen();
-            	}
-                client.sendMessage("PLAY_BOT");
-                System.out.println("Sent bot request");
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            String username = ViewManager.getUsername();
+            wsClient.connectIfNeeded(username, false);
+            wsClient.send("MATCH;" + username + ";server;ranked");
         });
 
+        playBotBtn.setOnAction(e -> ViewManager.switchTo("BotDifficulty"));
+        leaderboardBtn.setOnAction(e -> ViewManager.switchTo("Leaderboard"));
         logoutBtn.setOnAction(e -> ViewManager.switchTo("Login"));
 
         layout.getChildren().addAll(welcomeLabel, playRankedBtn, playBotBtn, leaderboardBtn, logoutBtn);
