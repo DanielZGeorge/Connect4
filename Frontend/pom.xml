@@ -29,10 +29,10 @@
     </dependencies>
 
     <build>
-        <sourceDirectory>Frontend</sourceDirectory>
+        <sourceDirectory>.</sourceDirectory>
         <resources>
             <resource>
-                <directory>Frontend</directory>
+                <directory>.</directory>
                 <excludes>
                     <exclude>**/*.java</exclude>
                 </excludes>
