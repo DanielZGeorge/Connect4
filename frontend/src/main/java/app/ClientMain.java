@@ -5,6 +5,7 @@ import ui.MainMenuView;
 import ui.GameBoardView;
 import ui.LeaderboardView;
 import ui.BotDifficultyView;
+import ui.ActiveMatchesView;
 import ui.ViewManager;
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -20,6 +21,7 @@ public class ClientMain extends Application {
         GameBoardView boardView = new GameBoardView();
         LeaderboardView leaderboardView = new LeaderboardView();
         BotDifficultyView botDifficultyView = new BotDifficultyView();
+        ActiveMatchesView activeMatchesView = new ActiveMatchesView();
 
         // Register Scenes
         ViewManager.addScene("Login", loginView.getScene());
@@ -27,6 +29,7 @@ public class ClientMain extends Application {
         ViewManager.addScene("Game",  boardView.getScene());
         ViewManager.addScene("Leaderboard", leaderboardView.getScene());
         ViewManager.addScene("BotDifficulty", botDifficultyView.getScene());
+        ViewManager.addScene("ActiveMatches", activeMatchesView.getScene());
 
         // Start at Login
         stage.setTitle("Connect 4 Online");

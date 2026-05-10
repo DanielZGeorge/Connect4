@@ -267,7 +267,9 @@ public class GameBoardView {
         newGameBtn.setOnAction(e -> resetGame());
         lobbyBtn.setOnAction(e  -> {
             if (timer != null) timer.stop();
-            ViewManager.switchTo("Menu");
+            boolean wasSpectating = ViewManager.isSpectating();
+            ViewManager.setSpectating(false);
+            ViewManager.switchTo(wasSpectating && ViewManager.isGuest() ? "ActiveMatches" : "Menu");
         });
 
         HBox btnRow = new HBox(10, rematchBtn, newGameBtn, lobbyBtn);
@@ -419,6 +421,7 @@ public class GameBoardView {
 
     private void handleClick(int col) {
         if (gameOver) return;
+        if (ViewManager.isSpectating()) return;
         String user = ViewManager.getUsername();
         wsClient.connectIfNeeded(user, ViewManager.isGuest());
         wsClient.send("MOVE;" + user + ";server;col=" + col);
@@ -627,6 +630,11 @@ public class GameBoardView {
     private void sendChat() {
         String text = chatInput.getText().trim();
         if (text.isEmpty() || gameOver) return;
+        if (ViewManager.isSpectating()) {
+            addSystemMessage("Spectators can't chat.");
+            chatInput.clear();
+            return;
+        }
 
         String user = ViewManager.getUsername();
         wsClient.connectIfNeeded(user, ViewManager.isGuest());
@@ -753,7 +761,12 @@ public class GameBoardView {
 
     private void updateStatusFromSnapshot(Snapshot snapshot) {
         if (!snapshot.gameOver()) {
-            statusLabel.setStyle("-fx-text-fill: #5a607a; -fx-font-size: 12px;");
+            if (ViewManager.isSpectating()) {
+                statusLabel.setText("👁  Spectating  " + snapshot.player1() + " vs " + snapshot.player2());
+                statusLabel.setStyle("-fx-text-fill: #3b6fff; -fx-font-size: 13px; -fx-font-weight: bold;");
+            } else {
+                statusLabel.setStyle("-fx-text-fill: #5a607a; -fx-font-size: 12px;");
+            }
             return;
         }
 

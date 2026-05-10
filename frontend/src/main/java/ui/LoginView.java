@@ -3,8 +3,10 @@ package ui;
 import mock.MockBackend;
 import client.HttpClientUtil;
 import javafx.geometry.Pos;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 
 public class LoginView {
@@ -32,7 +34,7 @@ public class LoginView {
             String user = usernameField.getText();
             String pass = passwordField.getText();
 
-            //testing response of login servlets 
+            //testing response of login servlets
             String response = HttpClientUtil.login(user, pass);
             if ("LOGIN_SUCCESS".equals(response)) {
                 System.out.println("Login Success!");
@@ -45,6 +47,11 @@ public class LoginView {
             }
         });
 
+        Button registerBtn = new Button("Register");
+        registerBtn.setMinWidth(200);
+        registerBtn.setStyle("-fx-background-color: #3b6fff; -fx-text-fill: white;");
+        registerBtn.setOnAction(e -> showRegisterDialog(usernameField, passwordField));
+
         Button guestBtn = new Button("Continue as Guest");
         guestBtn.setMinWidth(200);
         guestBtn.setStyle("-fx-background-color: #7f8c8d; -fx-text-fill: white;");
@@ -54,7 +61,7 @@ public class LoginView {
             ViewManager.switchTo("Menu");
         });
 
-        layout.getChildren().addAll(title, usernameField, passwordField, loginBtn, guestBtn);
+        layout.getChildren().addAll(title, usernameField, passwordField, loginBtn, registerBtn, guestBtn);
         this.scene = new Scene(layout, 800, 600);
 
         // Apply the CSS file to the scene
@@ -78,4 +85,73 @@ public class LoginView {
     }
 
     public Scene getScene() { return scene; }
+
+    private void showRegisterDialog(TextField loginUsernameField, PasswordField loginPasswordField) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Create Account");
+        dialog.setHeaderText("Register a new Connect 4 account");
+
+        ButtonType createBtn = new ButtonType("Create Account", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(createBtn, ButtonType.CANCEL);
+
+        TextField username = new TextField();
+        username.setPromptText("Username");
+        TextField email = new TextField();
+        email.setPromptText("Email");
+        PasswordField password = new PasswordField();
+        password.setPromptText("Password");
+        PasswordField confirm = new PasswordField();
+        confirm.setPromptText("Confirm password");
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #ff6464;");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(10));
+        grid.add(new Label("Username:"), 0, 0); grid.add(username, 1, 0);
+        grid.add(new Label("Email:"), 0, 1);    grid.add(email, 1, 1);
+        grid.add(new Label("Password:"), 0, 2); grid.add(password, 1, 2);
+        grid.add(new Label("Confirm:"), 0, 3);  grid.add(confirm, 1, 3);
+        grid.add(errorLabel, 0, 4, 2, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Button createButton = (Button) dialog.getDialogPane().lookupButton(createBtn);
+        createButton.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
+            String u = username.getText() == null ? "" : username.getText().trim();
+            String em = email.getText() == null ? "" : email.getText().trim();
+            String p = password.getText() == null ? "" : password.getText();
+            String c = confirm.getText() == null ? "" : confirm.getText();
+
+            if (u.isEmpty() || em.isEmpty() || p.isEmpty()) {
+                errorLabel.setText("All fields are required.");
+                ev.consume();
+                return;
+            }
+            if (!p.equals(c)) {
+                errorLabel.setText("Passwords do not match.");
+                ev.consume();
+                return;
+            }
+
+            String response = HttpClientUtil.register(u, em, p);
+            switch (response == null ? "" : response) {
+                case "REGISTER_SUCCESS":
+                    loginUsernameField.setText(u);
+                    loginPasswordField.setText(p);
+                    new Alert(Alert.AlertType.INFORMATION, "Account created! You can log in now.").showAndWait();
+                    break;
+                case "USERNAME_OR_EMAIL_TAKEN":
+                    errorLabel.setText("Username or email already taken.");
+                    ev.consume();
+                    break;
+                default:
+                    errorLabel.setText("Registration failed. Try again.");
+                    ev.consume();
+            }
+        });
+
+        dialog.showAndWait();
+    }
 }
