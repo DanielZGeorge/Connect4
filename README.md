@@ -4,12 +4,12 @@
 
 To run the frontend, run:
 
-`cd Frontend
+`cd Frontend\n
 mvn package javafx:run`
 
 To run the backend servlets, run:
 
-`cd backend
+`cd backend\n
 mvn package cargo:run`
 
 To run the NIO server, run NioServerMain.java as a java application.
