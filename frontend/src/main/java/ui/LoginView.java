@@ -45,6 +45,13 @@ public class LoginView {
             }
         });
 
+        Button registerBtn = new Button("Register");
+        registerBtn.setMinWidth(200);
+        registerBtn.setStyle("-fx-background-color: #7f8c8d; -fx-text-fill: white;");
+        registerBtn.setOnAction(e -> {
+            ViewManager.switchTo("Register");
+        });
+
         Button guestBtn = new Button("Continue as Guest");
         guestBtn.setMinWidth(200);
         guestBtn.setStyle("-fx-background-color: #7f8c8d; -fx-text-fill: white;");
@@ -54,7 +61,7 @@ public class LoginView {
             ViewManager.switchTo("Menu");
         });
 
-        layout.getChildren().addAll(title, usernameField, passwordField, loginBtn, guestBtn);
+        layout.getChildren().addAll(title, usernameField, passwordField, loginBtn, registerBtn, guestBtn);
         this.scene = new Scene(layout, 800, 600);
 
         // Apply the CSS file to the scene

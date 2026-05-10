@@ -36,6 +36,32 @@ public class HttpClientUtil {
         }
     }
 
+    public static String register(String username, String email, String password) {
+        try {
+            URL url = new URL("http://localhost:8080/backend/register");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+
+            String params = "username=" + username + "&email=" + email + "&password=" + password;
+
+            OutputStream os = conn.getOutputStream();
+            os.write(params.getBytes());
+            os.flush();
+
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream())
+            );
+
+            return reader.readLine();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "ERROR";
+        }
+    }
+
     public static LeaderboardResponse getLeaderboard(String query, int page, int size) {
         try {
             String safeQuery = (query == null) ? "" : query.trim();

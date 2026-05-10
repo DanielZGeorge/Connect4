@@ -2,6 +2,7 @@ package app;
 
 import ui.LoginView;
 import ui.MainMenuView;
+import ui.RegistrationView;
 import ui.GameBoardView;
 import ui.LeaderboardView;
 import ui.BotDifficultyView;
@@ -20,6 +21,7 @@ public class ClientMain extends Application {
         GameBoardView boardView = new GameBoardView();
         LeaderboardView leaderboardView = new LeaderboardView();
         BotDifficultyView botDifficultyView = new BotDifficultyView();
+        RegistrationView registrationView = new RegistrationView();
 
         // Register Scenes
         ViewManager.addScene("Login", loginView.getScene());
@@ -27,6 +29,7 @@ public class ClientMain extends Application {
         ViewManager.addScene("Game",  boardView.getScene());
         ViewManager.addScene("Leaderboard", leaderboardView.getScene());
         ViewManager.addScene("BotDifficulty", botDifficultyView.getScene());
+        ViewManager.addScene("Register", registrationView.getScene());
 
         // Start at Login
         stage.setTitle("Connect 4 Online");
