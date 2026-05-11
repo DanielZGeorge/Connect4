@@ -1,6 +1,5 @@
 package ui;
 
-import mock.MockBackend;
 import client.HttpClientUtil;
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
