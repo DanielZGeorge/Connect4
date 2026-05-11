@@ -20,12 +20,14 @@ public class MainMenuView {
 
         Button playRankedBtn = new Button("Play Ranked Match");
         Button playBotBtn = new Button("Practice vs Bot");
+        Button spectateBtn = new Button("Watch Live Matches");
         Button leaderboardBtn = new Button("View Leaderboard");
         Button logoutBtn = new Button("Logout");
 
         // Set widths for consistency
         playRankedBtn.setMinWidth(250);
         playBotBtn.setMinWidth(250);
+        spectateBtn.setMinWidth(250);
         leaderboardBtn.setMinWidth(250);
 
         playRankedBtn.setOnAction(e -> {
@@ -36,14 +38,27 @@ public class MainMenuView {
             }
             String username = ViewManager.getUsername();
             wsClient.connectIfNeeded(username, false);
+            ViewManager.setSpectating(false);
             wsClient.send("MATCH;" + username + ";server;ranked");
         });
 
-        playBotBtn.setOnAction(e -> ViewManager.switchTo("BotDifficulty"));
+        playBotBtn.setOnAction(e -> {
+            if (ViewManager.isGuest()) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Guests can only spectate matches.");
+                alert.showAndWait();
+                return;
+            }
+            ViewManager.setSpectating(false);
+            ViewManager.switchTo("BotDifficulty");
+        });
+        spectateBtn.setOnAction(e -> ViewManager.switchTo("ActiveMatches"));
         leaderboardBtn.setOnAction(e -> ViewManager.switchTo("Leaderboard"));
-        logoutBtn.setOnAction(e -> ViewManager.switchTo("Login"));
+        logoutBtn.setOnAction(e -> {
+            ViewManager.setSpectating(false);
+            ViewManager.switchTo("Login");
+        });
 
-        layout.getChildren().addAll(welcomeLabel, playRankedBtn, playBotBtn, leaderboardBtn, logoutBtn);
+        layout.getChildren().addAll(welcomeLabel, playRankedBtn, playBotBtn, spectateBtn, leaderboardBtn, logoutBtn);
         this.scene = new Scene(layout, 800, 600);
     }
 

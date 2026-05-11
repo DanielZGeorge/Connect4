@@ -18,7 +18,7 @@ public class HttpClientUtil {
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
 
-            String params = "username=" + username + "&password=" + password;
+            String params = "username=" + encode(username) + "&password=" + encode(password);
 
             OutputStream os = conn.getOutputStream();
             os.write(params.getBytes());
@@ -44,7 +44,9 @@ public class HttpClientUtil {
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
 
-            String params = "username=" + username + "&email=" + email + "&password=" + password;
+            String params = "username=" + encode(username)
+                    + "&email=" + encode(email)
+                    + "&password=" + encode(password);
 
             OutputStream os = conn.getOutputStream();
             os.write(params.getBytes());
@@ -60,6 +62,42 @@ public class HttpClientUtil {
             e.printStackTrace();
             return "ERROR";
         }
+    }
+
+    public static List<ActiveMatch> getActiveMatches() {
+        try {
+            URL url = new URL("http://localhost:8080/backend/active-matches");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream())
+            );
+
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+
+            return parseActiveMatches(sb.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    private static List<ActiveMatch> parseActiveMatches(String json) {
+        List<ActiveMatch> matches = new ArrayList<>();
+        if (json == null || json.isBlank()) return matches;
+
+        Matcher rowMatcher = Pattern.compile(
+                "\\{\\\"gameId\\\":\\\"(.*?)\\\",\\\"player1\\\":\\\"(.*?)\\\",\\\"player2\\\":\\\"(.*?)\\\"\\}"
+        ).matcher(json);
+        while (rowMatcher.find()) {
+            matches.add(new ActiveMatch(rowMatcher.group(1), rowMatcher.group(2), rowMatcher.group(3)));
+        }
+        return matches;
     }
 
     public static LeaderboardResponse getLeaderboard(String query, int page, int size) {

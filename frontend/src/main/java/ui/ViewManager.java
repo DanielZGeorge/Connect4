@@ -9,6 +9,7 @@ public class ViewManager {
     private static HashMap<String, Scene> scenes = new HashMap<>();
     private static String username;
     private static boolean guest;
+    private static boolean spectating;
     private static String currentSceneName;
 
     public static void setStage(Stage stage) {
@@ -47,5 +48,13 @@ public class ViewManager {
 
     public static boolean isGuest() {
         return guest;
+    }
+
+    public static void setSpectating(boolean value) {
+        spectating = value;
+    }
+
+    public static boolean isSpectating() {
+        return spectating;
     }
 }
