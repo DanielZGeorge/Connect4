@@ -2,7 +2,6 @@ package app;
 
 import ui.LoginView;
 import ui.MainMenuView;
-import ui.RegistrationView;
 import ui.GameBoardView;
 import ui.LeaderboardView;
 import ui.BotDifficultyView;
